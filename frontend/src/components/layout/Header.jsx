@@ -1,7 +1,8 @@
 import { useContext, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Zap, DollarSign, Clock, Target, Activity, Play, Loader, AlertTriangle, X } from 'lucide-react';
+import { Bell, Zap, DollarSign, Clock, Target, Activity, Play, Loader, AlertTriangle, X, ShieldCheck } from 'lucide-react';
 import { LabelsContext } from '../../App';
+import * as api from '../../services/api';
 import { formatCurrency, formatNumber, formatPercent } from '../../services/config';
 import './Header.css';
 
