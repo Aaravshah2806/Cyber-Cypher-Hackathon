@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { LabelsContext } from '../App';
 import { Header, Sidebar, Footer } from '../components/layout';
-import { TrendingUp, DollarSign, Clock, Target, ArrowUpRight, Zap, User, Share2, FileText, Slack, ShieldCheck } from 'lucide-react';
+import { TrendingUp, DollarSign, Clock, Target, ArrowUpRight, Zap, User } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import * as api from '../services/api';
 import { formatCurrency, formatNumber, formatPercent, formatDuration } from '../services/config';
@@ -15,9 +15,6 @@ function ROIDashboard() {
   const [revenueData, setRevenueData] = useState({ data: [], peak: null });
   const [resolutionData, setResolutionData] = useState({ data: [], summary: {} });
   const [interventions, setInterventions] = useState([]);
-  const [maturityData, setMaturityData] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [exportLoading, setExportLoading] = useState(false);
   const [filters, setFilters] = useState({
     timePeriod: '24h',
     migrationPhase: 'all',
@@ -30,14 +27,12 @@ function ROIDashboard() {
 
   async function loadData() {
     try {
-      const [metricsRes, statusRes, revenueRes, resolutionRes, interventionsRes, maturityRes, leaderboardRes] = await Promise.all([
+      const [metricsRes, statusRes, revenueRes, resolutionRes, interventionsRes] = await Promise.all([
         api.getMetrics().catch(() => null),
         api.getSystemStatus().catch(() => null),
         api.getRevenueAtRisk(24).catch(() => ({ data: [], peak: null })),
         api.getResolutionStats(7).catch(() => ({ data: [], summary: {} })),
         api.getCriticalInterventions(10).catch(() => ({ data: [] })),
-        api.getAutopilotMaturity(30).catch(() => ({ data: [] })),
-        api.getFrictionLeaderboard(5).catch(() => ({ data: [] })),
       ]);
 
       setMetrics(metricsRes);
@@ -45,8 +40,6 @@ function ROIDashboard() {
       setRevenueData(revenueRes);
       setResolutionData(resolutionRes);
       setInterventions(interventionsRes.data || []);
-      setMaturityData(maturityRes.data || []);
-      setLeaderboard(leaderboardRes.data || []);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load ROI data:', err);
@@ -63,18 +56,6 @@ function ROIDashboard() {
     time: new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
     revenue: item.amount,
   })) || [];
-
-  async function handleExport(type) {
-    setExportLoading(true);
-    try {
-      const res = type === 'slack' ? await api.exportToSlack() : await api.exportToPdf();
-      alert(res.message);
-    } catch (err) {
-      console.error('Export failed:', err);
-    } finally {
-      setExportLoading(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -107,23 +88,9 @@ function ROIDashboard() {
                 <span className="status-label">{labels.roi_status}</span>
                 <span className="badge badge-success">{labels.roi_autonomous}</span>
               </div>
-              <div className="roi-export-actions">
-                <button 
-                  className="btn btn-outline btn-sm action-btn" 
-                  onClick={() => handleExport('slack')}
-                  disabled={exportLoading}
-                >
-                  <Slack size={14} />
-                  Share to Slack
-                </button>
-                <button 
-                  className="btn btn-primary btn-sm action-btn" 
-                  onClick={() => handleExport('pdf')}
-                  disabled={exportLoading}
-                >
-                  <FileText size={14} />
-                  Export PDF Report
-                </button>
+              <div className="status-badge">
+                <span className="status-label">{labels.roi_last_intervention}</span>
+                <span className="status-value">2m ago</span>
               </div>
             </div>
           </div>
@@ -293,92 +260,6 @@ function ROIDashboard() {
             </div>
           </div>
 
-          {/* New Features Row: Autopilot Maturity & Friction Leaderboard */}
-          <div className="charts-row">
-            {/* Auto-Pilot Maturity Chart */}
-            <div className="chart-card">
-              <div className="chart-header">
-                <div>
-                  <h3 className="chart-title">Auto-Pilot Maturity Score</h3>
-                  <p className="chart-subtitle">AI Confidence Trend & Resolution Autonomy</p>
-                </div>
-                <div className="chart-stat">
-                  <span className="stat-label">Current Maturity</span>
-                  <span className="stat-value success">Level 4 (Elite)</span>
-                </div>
-              </div>
-              <div className="chart-body">
-                <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={maturityData}>
-                    <defs>
-                      <linearGradient id="maturityGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4D9FFF" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#4D9FFF" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1A3333" />
-                    <XAxis 
-                      dataKey="period" 
-                      stroke="#5A6B6B"
-                      tick={{ fill: '#8B9A9A', fontSize: 11 }}
-                    />
-                    <YAxis 
-                      stroke="#5A6B6B"
-                      tick={{ fill: '#8B9A9A', fontSize: 11 }}
-                      domain={[0, 100]}
-                      tickFormatter={(v) => `${v}%`}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        background: '#0D2626',
-                        border: '1px solid #2A4444',
-                        borderRadius: '8px',
-                        color: '#FFFFFF'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="confidence" 
-                      name="AI Confidence"
-                      stroke="#4D9FFF" 
-                      strokeWidth={3}
-                      fill="url(#maturityGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Merchant Friction Leaderboard */}
-            <div className="chart-card">
-              <div className="chart-header">
-                <div>
-                  <h3 className="chart-title">Merchant Friction Leaderboard</h3>
-                  <p className="chart-subtitle">Top merchants triggering signals</p>
-                </div>
-              </div>
-              <div className="chart-body">
-                <div className="leaderboard-list">
-                  {leaderboard.map((item, index) => (
-                    <div key={item.id} className="leaderboard-item">
-                      <div className="leaderboard-rank">{index + 1}</div>
-                      <div className="leaderboard-info">
-                        <span className="leaderboard-name">{item.name}</span>
-                        <span className="leaderboard-tier badge badge-outline">{item.tier}</span>
-                      </div>
-                      <div className="leaderboard-stats">
-                        <span className="leaderboard-count">{item.signal_count}</span>
-                        <span className="leaderboard-label">Signals</span>
-                      </div>
-                    </div>
-                  ))}
-                  {leaderboard.length === 0 && (
-                    <div className="empty-state">No friction data available</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
           {/* Interventions Table */}
           <div className="interventions-section">
             <div className="section-header">

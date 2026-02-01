@@ -182,33 +182,6 @@ export async function getCriticalInterventions(limit = 10) {
   return fetchApi(`/analytics/critical-interventions?limit=${limit}`);
 }
 
-export async function getAutopilotMaturity(days = 30) {
-  return fetchApi(`/analytics/autopilot-maturity?days=${days}`);
-}
-
-export async function getFrictionLeaderboard(limit = 5) {
-  return fetchApi(`/analytics/friction-leaderboard?limit=${limit}`);
-}
-
-// ==================== Simulations ====================
-
-export async function triggerSimulation(type, severity = "CRITICAL") {
-  return fetchApi("/simulations/trigger", {
-    method: "POST",
-    body: JSON.stringify({ type, severity }),
-  });
-}
-
-// ==================== Exports ====================
-
-export async function exportToSlack() {
-  return fetchApi("/export/slack", { method: "POST" });
-}
-
-export async function exportToPdf() {
-  return fetchApi("/export/pdf", { method: "POST" });
-}
-
 // ==================== Ghost Mitigations ====================
 
 export async function getGhostMitigations(limit = 50) {

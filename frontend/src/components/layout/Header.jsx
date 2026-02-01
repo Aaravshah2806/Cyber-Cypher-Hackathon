@@ -1,8 +1,7 @@
 import { useContext, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Zap, DollarSign, Clock, Target, Activity, Play, Loader, AlertTriangle, X, ShieldCheck } from 'lucide-react';
+import { Bell, Zap, DollarSign, Clock, Target, Activity, Play, Loader, AlertTriangle, X } from 'lucide-react';
 import { LabelsContext } from '../../App';
-import * as api from '../../services/api';
 import { formatCurrency, formatNumber, formatPercent } from '../../services/config';
 import './Header.css';
 
@@ -60,9 +59,6 @@ function Header({ metrics, systemStatus, onDemoSignal }) {
   const [briefOpen, setBriefOpen] = useState(false);
   const [briefData, setBriefData] = useState(null);
   const [briefLoading, setBriefLoading] = useState(false);
-  const [simulationOpen, setSimulationOpen] = useState(false);
-  const [simulationLoading, setSimulationLoading] = useState(false);
-  const [selectedSimulation, setSelectedSimulation] = useState('404_SPIKE_DETECTED');
 
   /* Notification Logic */
   const [showNotifications, setShowNotifications] = useState(false);
@@ -166,31 +162,6 @@ const CHAOS_SCENARIOS = [
   { type: 'SSL_CERT_24H_EXPIRY', severity: 'WARN', source: 'CertManager', endpoint: 'api.healflow.io', metadata: { issuer: 'LetsEncrypt', valid_until: '2026-02-02T10:00:00Z' } },
   { type: 'KAFKA_LAG_SPIKE', severity: 'ERROR', source: 'EventStream', endpoint: 'topic/order_events', metadata: { lag: 45000, consumer_group: 'invoice_processor' } }
 ];
-
-  const handleTriggerSimulation = async () => {
-    setSimulationLoading(true);
-    try {
-      const res = await api.triggerSimulation(selectedSimulation);
-      
-      const newNotification = {
-        id: `sim_${Date.now()}`,
-        type: 'critical',
-        title: `CRITICAL: Simulation Underway - ${selectedSimulation}`,
-        time: 'Just now',
-        read: false
-      };
-      setNotifications(prev => [newNotification, ...prev]);
-
-      if (onDemoSignal && res.signal) {
-        onDemoSignal(res.signal, null);
-      }
-      setSimulationOpen(false);
-    } catch (err) {
-      console.error('Simulation trigger failed:', err);
-    } finally {
-      setSimulationLoading(false);
-    }
-  };
 
   const handleInjectMultiple = async () => {
     setDemoLoading(true);
@@ -309,46 +280,6 @@ const CHAOS_SCENARIOS = [
               <AlertTriangle size={16} />
               Chaos Mode
             </button>
-
-            {/* Simulation Trigger Dropdown */}
-            <div className="simulation-control">
-              <button 
-                className="btn btn-outline btn-sm action-btn" 
-                onClick={() => setSimulationOpen(!simulationOpen)}
-                title="Wargame Chaos Simulations"
-              >
-                <ShieldCheck size={16} />
-                Simulate
-              </button>
-              
-              {simulationOpen && (
-                <div className="simulation-dropdown">
-                  <div className="dropdown-header">
-                    <h4>War Game Scenarios</h4>
-                  </div>
-                  <div className="dropdown-body">
-                    <select 
-                      value={selectedSimulation} 
-                      onChange={(e) => setSelectedSimulation(e.target.value)}
-                      className="sim-select"
-                    >
-                      <option value="404_SPIKE_DETECTED">Simulate 404 Spikes</option>
-                      <option value="STRIPE_LATENCY_HIGH">Simulate Stripe Latency</option>
-                      <option value="DB_SCHEMA_LOCK">Simulate DB Schema Lock</option>
-                      <option value="LEGACY_SESSION_DROP">Simulate Session Loss</option>
-                      <option value="BOT_ATTACK_UVP">Simulate Bot Attack</option>
-                    </select>
-                    <button 
-                      className="btn btn-primary btn-block btn-sm"
-                      onClick={handleTriggerSimulation}
-                      disabled={simulationLoading}
-                    >
-                      {simulationLoading ? <Loader size={14} className="spinning" /> : "Run War Game"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
           
           <button className="btn btn-primary btn-sm" onClick={handleBriefMe}>

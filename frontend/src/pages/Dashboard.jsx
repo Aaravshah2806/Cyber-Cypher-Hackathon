@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { LabelsContext } from '../App';
 import { Header, Sidebar, Footer } from '../components/layout';
-import { LiveSignalLog, OODAVisualizer, HILQueue, BlastRadiusMap } from '../components/dashboard';
+import { LiveSignalLog, OODAVisualizer, HILQueue } from '../components/dashboard';
 import * as api from '../services/api';
 import './Dashboard.css';
 
@@ -16,7 +16,6 @@ function Dashboard() {
   const [signals, setSignals] = useState([]);
   const [agents, setAgents] = useState([]);
   const [hilRequests, setHilRequests] = useState([]);
-  const [merchants, setMerchants] = useState([]);
   
   // OODA Demo State - managed locally for demo purposes
   const [activeOODA, setActiveOODA] = useState(null);
@@ -50,13 +49,12 @@ function Dashboard() {
         time_period: filters.timePeriod
       };
 
-      const [metricsData, statusData, signalsData, agentsData, hilData, merchantsData] = await Promise.all([
+      const [metricsData, statusData, signalsData, agentsData, hilData] = await Promise.all([
         api.getMetrics(signalParams).catch(() => null),
         api.getSystemStatus().catch(() => null),
         api.getSignals(signalParams).catch(() => ({ data: [] })),
         api.getAgents().catch(() => ({ data: [] })),
         api.getHILRequests().catch(() => ({ data: [] })),
-        fetch('/api/merchants').then(res => res.json()).catch(() => ({ data: [] })),
       ]);
 
       setMetrics(metricsData);
@@ -64,7 +62,6 @@ function Dashboard() {
       setSignals(signalsData.data || []);
       setAgents(agentsData.data || []);
       setHilRequests(hilData.data || []);
-      setMerchants(merchantsData.data || []);
       
       // Find active agent processing something (real backend logic)
       if (!activeOODA) { // Only override if not in demo mode
@@ -372,10 +369,6 @@ function Dashboard() {
         
         <div className="content-area">
           <div className="panel">
-            <BlastRadiusMap 
-              merchants={merchants} 
-              signals={signals} 
-            />
             <LiveSignalLog 
               signals={signals} 
               onSignalClick={handleSignalClick}
