@@ -945,3 +945,84 @@ if __name__ == '__main__':
     
     print("\n")
     app.run(host='0.0.0.0', port=5000, debug=True)
+# ---------- Merchants ----------
+
+@app.route('/api/merchants', methods=['GET'])
+def get_merchants():
+    """Get all merchants"""
+    merchants = db.get_all_merchants()
+    return jsonify({"data": merchants})
+
+
+# ---------- New Analytics ----------
+
+@app.route('/api/analytics/autopilot-maturity', methods=['GET'])
+def get_autopilot_maturity():
+    """Get AI confidence trend data"""
+    days = int(request.args.get('days', 30))
+    data = db.get_autopilot_maturity_data(days)
+    return jsonify({"data": data})
+
+
+@app.route('/api/analytics/friction-leaderboard', methods=['GET'])
+def get_friction_leaderboard():
+    """Get top friction merchants"""
+    limit = int(request.args.get('limit', 5))
+    data = db.get_friction_leaderboard(limit)
+    return jsonify({"data": data})
+
+
+# ---------- Chaos Simulations ----------
+
+@app.route('/api/simulations/trigger', methods=['POST'])
+def trigger_simulation():
+    """Trigger a chaos simulation"""
+    data = request.get_json()
+    scenario_type = data.get('type', '404_SPIKE_DETECTED')
+    
+    # Mock finding a merchant for the simulation
+    merchants = db.get_all_merchants()
+    merchant = random.choice(merchants) if merchants else None
+    
+    scenario = {
+        "type": scenario_type,
+        "severity": data.get('severity', 'CRITICAL'),
+        "source": data.get('source', 'ChaosSimulator'),
+        "endpoint": data.get('endpoint', '/api/v1/chaos'),
+        "merchant_id": merchant['id'] if merchant else None,
+        "metadata": {
+            "simulation": True,
+            "chaos_factor": random.randint(50, 100)
+        }
+    }
+    
+    signal = db.create_signal(scenario)
+    db.log_audit('trigger', 'simulation', signal['id'], details=scenario)
+    
+    return jsonify({
+        "status": "triggered",
+        "signal": signal,
+        "message": f"Chaos Simulation '{scenario_type}' active"
+    })
+
+
+# ---------- Exports ----------
+
+@app.route('/api/export/slack', methods=['POST'])
+def export_to_slack():
+    """Mock Slack export"""
+    return jsonify({
+        "success": True, 
+        "message": "Report shared to #eng-ops channel",
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
+
+@app.route('/api/export/pdf', methods=['POST'])
+def export_to_pdf():
+    """Mock PDF export"""
+    return jsonify({
+        "success": True,
+        "url": "/static/reports/migration_health_summary.pdf",
+        "message": "PDF report generated successfully"
+    })
