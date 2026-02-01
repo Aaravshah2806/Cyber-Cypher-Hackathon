@@ -1,5 +1,9 @@
 /* HealFlow Design System - Complete CSS Variables */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Background & Base */
   --bg-primary: #0A1F1F;

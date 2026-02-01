@@ -3,6 +3,8 @@ import { useState, useEffect, createContext } from 'react';
 import Dashboard from './pages/Dashboard';
 import ConfigDiff from './pages/ConfigDiff';
 import ROIDashboard from './pages/ROIDashboard';
+import AstraHome from './landing-pages/AstraHome';
+import Login from './landing-pages/Login';
 import { getUILabels } from './services/api';
 import { DEFAULT_LABELS } from './services/config';
 
@@ -47,7 +49,8 @@ function App() {
     <LabelsContext.Provider value={labels}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<AstraHome />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/config-diff/:id" element={<ConfigDiff />} />
           <Route path="/roi" element={<ROIDashboard />} />
