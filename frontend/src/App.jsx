@@ -3,8 +3,6 @@ import { useState, useEffect, createContext } from 'react';
 import Dashboard from './pages/Dashboard';
 import ConfigDiff from './pages/ConfigDiff';
 import ROIDashboard from './pages/ROIDashboard';
-import AstraHome from './landing-pages/AstraHome';
-import Login from './landing-pages/Login';
 import { getUILabels } from './services/api';
 import { DEFAULT_LABELS } from './services/config';
 
@@ -13,45 +11,23 @@ export const LabelsContext = createContext(DEFAULT_LABELS);
 
 function App() {
   const [labels, setLabels] = useState(DEFAULT_LABELS);
-  const [loading, setLoading] = useState(true);
 
+  // Fetch labels in background but don't block render
   useEffect(() => {
-    // Fetch labels from API
     getUILabels()
       .then(data => {
         setLabels({ ...DEFAULT_LABELS, ...data });
       })
       .catch(err => {
         console.warn('Using default labels:', err);
-      })
-      .finally(() => {
-        setLoading(false);
       });
   }, []);
-
-  if (loading) {
-    return (
-      <div className="app-layout" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="badge badge-success badge-pulse">
-            {DEFAULT_LABELS.processing}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <LabelsContext.Provider value={labels}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AstraHome />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/config-diff/:id" element={<ConfigDiff />} />
           <Route path="/roi" element={<ROIDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -62,3 +38,4 @@ function App() {
 }
 
 export default App;
+
